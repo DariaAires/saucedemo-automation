@@ -1,0 +1,304 @@
+// Создаем файл: src/test/java/com/saucedemo/tests/LoginTests.java
+
+package com.saucedemo.tests;
+
+import com.saucedemo.constants.Constants;
+import com.saucedemo.pages.LoginPage;
+import com.saucedemo.pages.ProductsPage;
+import com.saucedemo.utils.TestListener;
+import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
+import io.qameta.allure.Severity;
+import io.qameta.allure.SeverityLevel;
+import io.qameta.allure.Story;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Тестовый класс для проверки функциональности авторизации на SauceDemo
+ * Содержит 5 тестовых сценариев согласно требованиям
+ */
+@ExtendWith(TestListener.class)
+@Epic("Авторизация пользователя")
+@Feature("Функциональность логина")
+@DisplayName("Тесты авторизации на SauceDemo")
+public class LoginTests {
+    
+    private LoginPage loginPage;
+    private ProductsPage productsPage;
+    
+    /**
+     * Метод выполняется перед каждым тестом
+     * Инициализирует Page Objects и открывает страницу логина
+     */
+    @BeforeEach
+    public void setUp() {
+        loginPage = new LoginPage();
+        productsPage = new ProductsPage();
+        loginPage.open();
+        
+        // Проверяем что страница логина открыта корректно
+        assertTrue(loginPage.isLoginPageDisplayed(), 
+            "Страница логина должна отображаться корректно");
+    }
+    
+    /**
+     * Метод выполняется после каждого теста
+     * Очистка выполняется в TestListener
+     */
+    @AfterEach
+    public void tearDown() {
+        // Закрытие драйвера выполняется в TestListener
+    }
+    
+    /**
+     * Тест 1: Успешный логин стандартным пользователем
+     * Требование: Проверить успешную авторизацию с корректными учетными данными
+     */
+    @Test
+    @DisplayName("1. Успешный логин стандартным пользователем")
+    @Description("Тест проверяет успешную авторизацию с корректными учетными данными: " +
+                 "standard_user / secret_sauce")
+    @Severity(SeverityLevel.BLOCKER)
+    @Story("Позитивный сценарий логина")
+    public void testSuccessfulLoginWithStandardUser() {
+        // Given: Пользователь находится на странице логина
+        
+        // When: Пользователь вводит корректные учетные данные и нажимает кнопку Login
+        loginPage.login(Constants.STANDARD_USER, Constants.STANDARD_PASSWORD);
+        
+        // Then: Пользователь успешно авторизован и видит страницу продуктов
+        assertTrue(productsPage.isProductsPageDisplayed(), 
+            "После успешного логина должна отображаться страница продуктов");
+        
+        assertEquals("Products", productsPage.getPageTitleText(), 
+            "Заголовок страницы должен быть 'Products'");
+        
+        assertTrue(productsPage.isMenuDisplayed(), 
+            "Меню должно быть доступно на странице продуктов");
+        
+        assertTrue(productsPage.hasProducts(), 
+            "На странице продуктов должны отображаться товары");
+        
+        int productCount = productsPage.getProductCount();
+        assertTrue(productCount > 0, 
+            "Количество товаров на странице должно быть больше 0");
+        
+        // Дополнительная проверка: URL должен содержать inventory.html
+        String currentUrl = productsPage.getCurrentUrl();
+        assertTrue(currentUrl.contains("inventory.html"), 
+            "URL должен содержать 'inventory.html' после успешного логина");
+    }
+    
+    /**
+     * Тест 2: Логин с неверным паролем
+     * Требование: Проверить сообщение об ошибке при вводе неверного пароля
+     */
+    @Test
+    @DisplayName("2. Логин с неверным паролем")
+    @Description("Тест проверяет сообщение об ошибке при вводе неверного пароля " +
+                 "для существующего пользователя")
+    @Severity(SeverityLevel.CRITICAL)
+    @Story("Негативный сценарий логина")
+    public void testLoginWithWrongPassword() {
+        // Given: Пользователь находится на странице логина
+        
+        // When: Пользователь вводит корректное имя пользователя 
+        //       но неверный пароль и нажимает кнопку Login
+        loginPage.login(Constants.STANDARD_USER, Constants.INVALID_PASSWORD);
+        
+        // Then: Отображается сообщение об ошибке и пользователь остается на странице логина
+        assertTrue(loginPage.isErrorMessageDisplayed(), 
+            "При неверном пароле должно отображаться сообщение об ошибке");
+        
+        String actualError = loginPage.getErrorMessageText();
+        assertEquals(Constants.ERROR_INVALID_CREDENTIALS, actualError, 
+            "Текст ошибки должен соответствовать ожидаемому");
+        
+        assertTrue(loginPage.isLoginPageDisplayed(), 
+            "После ошибки пользователь должен остаться на странице логина");
+        
+        // Дополнительная проверка: поля не должны очищаться автоматически
+        // (зависит от реализации сайта, может потребоваться адаптация)
+    }
+    
+    /**
+     * Тест 3: Логин заблокированного пользователя
+     * Требование: Проверить что заблокированный пользователь не может авторизоваться
+     */
+    @Test
+    @DisplayName("3. Логин заблокированного пользователя")
+    @Description("Тест проверяет что заблокированный пользователь (locked_out_user) " +
+                 "не может авторизоваться в системе")
+    @Severity(SeverityLevel.CRITICAL)
+    @Story("Негативный сценарий логина")
+    public void testLoginWithLockedOutUser() {
+        // Given: Пользователь находится на странице логина
+        
+        // When: Заблокированный пользователь пытается авторизоваться
+        loginPage.login(Constants.LOCKED_USER, Constants.STANDARD_PASSWORD);
+        
+        // Then: Отображается сообщение об ошибке блокировки
+        assertTrue(loginPage.isErrorMessageDisplayed(), 
+            "Для заблокированного пользователя должно отображаться сообщение об ошибке");
+        
+        String actualError = loginPage.getErrorMessageText();
+        assertEquals(Constants.ERROR_LOCKED_USER, actualError, 
+            "Текст ошибки для заблокированного пользователя должен соответствовать ожидаемому");
+        
+        assertTrue(loginPage.isLoginPageDisplayed(), 
+            "После попытки входа заблокированным пользователем " +
+            "должна остаться страница логина");
+        
+        // Дополнительная проверка: пользователь не должен быть перенаправлен
+        String currentUrl = loginPage.getCurrentUrl();
+        assertEquals(Constants.BASE_URL, currentUrl, 
+            "URL должен остаться на странице логина");
+    }
+    
+    /**
+     * Тест 4: Логин с пустыми полями
+     * Требование: Проверить валидацию пустых полей при логине
+     */
+    @Test
+    @DisplayName("4. Логин с пустыми полями")
+    @Description("Тест проверяет валидацию пустых полей при попытке логина " +
+                 "без ввода имени пользователя и пароля")
+    @Severity(SeverityLevel.NORMAL)
+    @Story("Валидация полей ввода")
+    public void testLoginWithEmptyFields() {
+        // Given: Пользователь находится на странице логина
+        
+        // When: Пользователь нажимает кнопку Login без заполнения полей
+        loginPage.login(Constants.EMPTY_STRING, Constants.EMPTY_STRING);
+        
+        // Then: Отображается сообщение об ошибке обязательных полей
+        assertTrue(loginPage.isErrorMessageDisplayed(), 
+            "При пустых полях должно отображаться сообщение об ошибке");
+        
+        String actualError = loginPage.getErrorMessageText();
+        assertEquals(Constants.ERROR_EMPTY_USERNAME, actualError, 
+            "Текст ошибки для пустого имени пользователя должен соответствовать ожидаемому");
+        
+        // Дополнительная проверка: кнопка Login должна оставаться активной
+        assertTrue(loginPage.isLoginButtonEnabled(), 
+            "Кнопка Login должна оставаться активной после ошибки");
+        
+        // Дополнительная проверка: пробуем ввести только пароль
+        loginPage.clearBothFields()
+                 .enterPassword(Constants.STANDARD_PASSWORD)
+                 .clickLoginButton();
+        
+        assertTrue(loginPage.isErrorMessageDisplayed(), 
+            "При пустом имени пользователя должно отображаться сообщение об ошибке");
+        
+        // Дополнительная проверка: пробуем ввести только имя пользователя
+        loginPage.clearBothFields()
+                 .enterUsername(Constants.STANDARD_USER)
+                 .clickLoginButton();
+        
+        assertTrue(loginPage.isErrorMessageDisplayed(), 
+            "При пустом пароле должно отображаться сообщение об ошибке");
+    }
+    
+    /**
+     * Тест 5: Логин пользователем performance_glitch_user
+     * Требование: Проверить корректный переход и что страница открывается 
+     *             несмотря на возможные задержки
+     */
+    @Test
+    @DisplayName("5. Логин пользователем performance_glitch_user")
+    @Description("Тест проверяет что пользователь с задержками (performance_glitch_user) " +
+                 "успешно авторизуется и страница открывается в разумные сроки")
+    @Severity(SeverityLevel.NORMAL)
+    @Story("Тестирование производительности")
+    public void testLoginWithPerformanceGlitchUser() {
+        // Given: Пользователь находится на странице логина
+        
+        // When: Пользователь performance_glitch_user пытается авторизоваться
+        //       Замеряем время выполнения операции
+        long startTime = System.currentTimeMillis();
+        loginPage.login(Constants.PERFORMANCE_USER, Constants.STANDARD_PASSWORD);
+        long endTime = System.currentTimeMillis();
+        
+        // Then: Пользователь успешно авторизован, страница открывается в разумное время
+        assertTrue(productsPage.isProductsPageDisplayed(), 
+            "Пользователь performance_glitch_user должен успешно авторизоваться");
+        
+        assertEquals("Products", productsPage.getPageTitleText(), 
+            "Заголовок страницы должен быть 'Products'");
+        
+        // Проверка времени ответа
+        long responseTime = endTime - startTime;
+        
+        // Логируем время ответа
+        System.out.println("\n════════════════════════════════════════════════════════════════");
+        System.out.println("  ПРОИЗВОДИТЕЛЬНОСТЬ:");
+        System.out.println("  Время ответа для performance_glitch_user: " + responseTime + "ms");
+        System.out.println("  Ожидаемый порог: " + Constants.PERFORMANCE_THRESHOLD_MS + "ms");
+        System.out.println("════════════════════════════════════════════════════════════════\n");
+        
+        // Проверяем что время ответа не превышает пороговое значение
+        assertTrue(responseTime < Constants.PERFORMANCE_THRESHOLD_MS, 
+            String.format("Время ответа (%dms) должно быть меньше %dms", 
+                responseTime, Constants.PERFORMANCE_THRESHOLD_MS));
+        
+        // Дополнительная проверка: функциональность на странице должна работать
+        assertTrue(productsPage.hasProducts(), 
+            "На странице должны отображаться товары");
+        
+        assertTrue(productsPage.isMenuDisplayed(), 
+            "Меню должно быть доступно");
+        
+        // Проверяем что можно добавить товар в корзину (дополнительная проверка)
+        int initialCartCount = productsPage.getCartItemCount();
+        productsPage.addProductToCart(0);
+        int updatedCartCount = productsPage.getCartItemCount();
+        
+        assertEquals(initialCartCount + 1, updatedCartCount, 
+            "После добавления товара количество в корзине должно увеличиться на 1");
+        
+        // Убираем товар из корзины для очистки состояния
+        productsPage.removeProductFromCart(0);
+    }
+    
+    /**
+     * Дополнительный тест: Проверка элементов интерфейса страницы логина
+     * (Не требуется по заданию, но полезно для демонстрации)
+     */
+    @Test
+    @DisplayName("Дополнительно: Проверка элементов интерфейса страницы логина")
+    @Description("Тест проверяет наличие и корректность всех элементов на странице логина")
+    @Severity(SeverityLevel.MINOR)
+    @Story("Тестирование UI элементов")
+    public void testLoginPageUIElements() {
+        // Проверяем наличие основных элементов
+        assertTrue(loginPage.isLoginPageDisplayed(), 
+            "Основные элементы страницы логина должны отображаться");
+        
+        // Проверяем плейсхолдеры
+        assertEquals("Username", loginPage.getUsernamePlaceholder(), 
+            "Плейсхолдер поля username должен быть 'Username'");
+        
+        assertEquals("Password", loginPage.getPasswordPlaceholder(), 
+            "Плейсхолдер поля password должен быть 'Password'");
+        
+        // Проверяем текст кнопки логина
+        assertEquals("Login", loginPage.getLoginButtonText(), 
+            "Текст кнопки логина должен быть 'Login'");
+        
+        // Проверяем что кнопка логина активна по умолчанию
+        assertTrue(loginPage.isLoginButtonEnabled(), 
+            "Кнопка логина должна быть активной");
+        
+        // Проверяем наличие стандартных учетных данных на странице
+        assertTrue(loginPage.areStandardCredentialsDisplayed(), 
+            "На странице должны отображаться стандартные учетные данные");
+    }
+}

@@ -1,0 +1,231 @@
+// Создаем файл: src/main/java/com/saucedemo/pages/BasePage.java
+
+package com.saucedemo.pages;
+
+import com.saucedemo.utils.DriverManager;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.PageFactory;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.FluentWait;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.time.Duration;
+import java.util.List;
+
+/**
+ * Абстрактный базовый класс для всех Page Object классов
+ * Содержит общие методы и утилиты для работы с веб-элементами
+ */
+public abstract class BasePage {
+    protected WebDriver driver;
+    protected WebDriverWait wait;
+    protected FluentWait<WebDriver> fluentWait;
+    protected JavascriptExecutor jsExecutor;
+    protected Actions actions;
+    protected static final Logger logger = LogManager.getLogger(BasePage.class);
+    
+    /**
+     * Конструктор BasePage
+     * Инициализирует драйвер, ожидания и PageFactory
+     */
+    public BasePage() {
+        this.driver = DriverManager.getInstance().getDriver();
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        this.fluentWait = new FluentWait<>(driver)
+                .withTimeout(Duration.ofSeconds(30))
+                .pollingEvery(Duration.ofMillis(500))
+                .ignoring(Exception.class);
+        this.jsExecutor = (JavascriptExecutor) driver;
+        this.actions = new Actions(driver);
+        
+        // Инициализация PageFactory для автоматического поиска элементов
+        PageFactory.initElements(driver, this);
+        
+        logger.debug("Инициализирована страница: {}", this.getClass().getSimpleName());
+    }
+    
+    /**
+     * Ожидание видимости элемента
+     */
+    protected void waitForVisibility(WebElement element) {
+        try {
+            wait.until(ExpectedConditions.visibilityOf(element));
+            logger.debug("Элемент стал видимым: {}", element);
+        } catch (Exception e) {
+            logger.error("Элемент не стал видимым: {}", e.getMessage());
+            throw e;
+        }
+    }
+    
+    /**
+     * Ожидание кликабельности элемента
+     */
+    protected void waitForClickable(WebElement element) {
+        try {
+            wait.until(ExpectedConditions.elementToBeClickable(element));
+            logger.debug("Элемент стал кликабельным: {}", element);
+        } catch (Exception e) {
+            logger.error("Элемент не стал кликабельным: {}", e.getMessage());
+            throw e;
+        }
+    }
+    
+    /**
+     * Безопасный клик по элементу
+     */
+    protected void safeClick(WebElement element) {
+        try {
+            waitForClickable(element);
+            element.click();
+            logger.debug("Выполнен клик по элементу");
+        } catch (Exception e) {
+            logger.error("Не удалось кликнуть по элементу: {}", e.getMessage());
+            throw e;
+        }
+    }
+    
+    /**
+     * Безопасное введение текста
+     */
+    protected void safeSendKeys(WebElement element, String text) {
+        try {
+            waitForVisibility(element);
+            element.clear();
+            element.sendKeys(text);
+            logger.debug("Введен текст '{}' в элемент", text);
+        } catch (Exception e) {
+            logger.error("Не удалось ввести текст в элемент: {}", e.getMessage());
+            throw e;
+        }
+    }
+    
+    /**
+     * Получение текста элемента
+     */
+    protected String safeGetText(WebElement element) {
+        try {
+            waitForVisibility(element);
+            String text = element.getText();
+            logger.debug("Получен текст из элемента: '{}'", text);
+            return text;
+        } catch (Exception e) {
+            logger.error("Не удалось получить текст элемента: {}", e.getMessage());
+            throw e;
+        }
+    }
+    
+    /**
+     * Проверка отображения элемента
+     */
+    protected boolean isElementDisplayed(WebElement element) {
+        try {
+            boolean displayed = element.isDisplayed();
+            logger.debug("Элемент отображается: {}", displayed);
+            return displayed;
+        } catch (Exception e) {
+            logger.debug("Элемент не отображается: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Прокрутка к элементу
+     */
+    protected void scrollToElement(WebElement element) {
+        try {
+            jsExecutor.executeScript("arguments[0].scrollIntoView(true);", element);
+            logger.debug("Прокрутка к элементу выполнена");
+        } catch (Exception e) {
+            logger.error("Не удалось прокрутить к элементу: {}", e.getMessage());
+        }
+    }
+    
+    /**
+     * JavaScript клик (обход стандартного клика)
+     */
+    protected void jsClick(WebElement element) {
+        try {
+            jsExecutor.executeScript("arguments[0].click();", element);
+            logger.debug("JavaScript клик выполнен");
+        } catch (Exception e) {
+            logger.error("Не удалось выполнить JavaScript клик: {}", e.getMessage());
+            throw e;
+        }
+    }
+    
+    /**
+     * Ожидание загрузки страницы
+     */
+    protected void waitForPageToLoad() {
+        try {
+            wait.until(webDriver -> 
+                jsExecutor.executeScript("return document.readyState").equals("complete"));
+            logger.debug("Страница полностью загружена");
+        } catch (Exception e) {
+            logger.warn("Страница не полностью загружена: {}", e.getMessage());
+        }
+    }
+    
+    /**
+     * Получение текущего URL
+     */
+    public String getCurrentUrl() {
+        String url = driver.getCurrentUrl();
+        logger.debug("Текущий URL: {}", url);
+        return url;
+    }
+    
+    /**
+     * Получение заголовка страницы
+     */
+    public String getPageTitle() {
+        String title = driver.getTitle();
+        logger.debug("Заголовок страницы: {}", title);
+        return title;
+    }
+    
+    /**
+     * Обновление страницы
+     */
+    public void refreshPage() {
+        driver.navigate().refresh();
+        waitForPageToLoad();
+        logger.debug("Страница обновлена");
+    }
+    
+    /**
+     * Переход назад в истории браузера
+     */
+    public void navigateBack() {
+        driver.navigate().back();
+        waitForPageToLoad();
+        logger.debug("Переход назад выполнен");
+    }
+    
+    /**
+     * Переход вперед в истории браузера
+     */
+    public void navigateForward() {
+        driver.navigate().forward();
+        waitForPageToLoad();
+        logger.debug("Переход вперед выполнен");
+    }
+    
+    /**
+     * Сделать скриншот страницы
+     */
+    public byte[] takeScreenshot() {
+        try {
+            return ((org.openqa.selenium.TakesScreenshot) driver)
+                    .getScreenshotAs(org.openqa.selenium.OutputType.BYTES);
+        } catch (Exception e) {
+            logger.error("Не удалось сделать скриншот: {}", e.getMessage());
+            return new byte[0];
+        }
+    }
+}

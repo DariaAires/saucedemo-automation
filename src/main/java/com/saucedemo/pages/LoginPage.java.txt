@@ -1,0 +1,264 @@
+// Создаем файл: src/main/java/com/saucedemo/pages/LoginPage.java
+
+package com.saucedemo.pages;
+
+import com.saucedemo.constants.Constants;
+import io.qameta.allure.Step;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.PageFactory;
+
+/**
+ * Page Object класс для страницы логина SauceDemo
+ * Содержит элементы и методы для работы со страницей авторизации
+ */
+public class LoginPage extends BasePage {
+    
+    // Элементы страницы с использованием аннотаций PageFactory
+    
+    @FindBy(id = Constants.USERNAME_INPUT_ID)
+    private WebElement usernameInput;
+    
+    @FindBy(id = Constants.PASSWORD_INPUT_ID)
+    private WebElement passwordInput;
+    
+    @FindBy(id = Constants.LOGIN_BUTTON_ID)
+    private WebElement loginButton;
+    
+    @FindBy(css = Constants.ERROR_MESSAGE_CSS)
+    private WebElement errorMessage;
+    
+    @FindBy(className = Constants.LOGIN_LOGO_CLASS)
+    private WebElement loginLogo;
+    
+    @FindBy(className = "bot_column")
+    private WebElement botImage;
+    
+    @FindBy(className = "login_credentials")
+    private WebElement loginCredentials;
+    
+    @FindBy(className = "login_password")
+    private WebElement loginPassword;
+    
+    /**
+     * Конструктор LoginPage
+     */
+    public LoginPage() {
+        super(); // Вызов конструктора BasePage
+        PageFactory.initElements(driver, this);
+        logger.info("Создан объект страницы логина");
+    }
+    
+    /**
+     * Открытие страницы логина
+     */
+    @Step("Открыть страницу логина SauceDemo")
+    public LoginPage open() {
+        driver.get(Constants.BASE_URL);
+        waitForPageToLoad();
+        waitForVisibility(loginLogo);
+        logger.info("Открыта страница логина: {}", Constants.BASE_URL);
+        return this;
+    }
+    
+    /**
+     * Ввод имени пользователя
+     */
+    @Step("Ввести имя пользователя: {username}")
+    public LoginPage enterUsername(String username) {
+        safeSendKeys(usernameInput, username);
+        logger.info("Введено имя пользователя: {}", username);
+        return this;
+    }
+    
+    /**
+     * Ввод пароля
+     */
+    @Step("Ввести пароль")
+    public LoginPage enterPassword(String password) {
+        safeSendKeys(passwordInput, password);
+        logger.info("Введен пароль: {}", password != null ? "***" : "null");
+        return this;
+    }
+    
+    /**
+     * Нажатие кнопки логина
+     */
+    @Step("Нажать кнопку логина")
+    public void clickLoginButton() {
+        safeClick(loginButton);
+        logger.info("Нажата кнопка логина");
+    }
+    
+    /**
+     * Комплексный метод для выполнения логина
+     */
+    @Step("Выполнить логин с именем пользователя '{username}' и паролем")
+    public void login(String username, String password) {
+        enterUsername(username);
+        enterPassword(password);
+        clickLoginButton();
+        logger.info("Выполнена попытка логина для пользователя: {}", username);
+    }
+    
+    /**
+     * Получение текста ошибки
+     */
+    @Step("Получить текст сообщения об ошибке")
+    public String getErrorMessageText() {
+        if (isErrorMessageDisplayed()) {
+            String errorText = safeGetText(errorMessage);
+            logger.info("Получен текст ошибки: {}", errorText);
+            return errorText;
+        }
+        logger.warn("Сообщение об ошибке не отображается");
+        return "";
+    }
+    
+    /**
+     * Проверка отображения ошибки
+     */
+    @Step("Проверить отображение сообщения об ошибке")
+    public boolean isErrorMessageDisplayed() {
+        boolean isDisplayed = isElementDisplayed(errorMessage);
+        logger.debug("Сообщение об ошибке отображается: {}", isDisplayed);
+        return isDisplayed;
+    }
+    
+    /**
+     * Проверка что страница логина открыта
+     */
+    @Step("Проверить что страница логина открыта")
+    public boolean isLoginPageDisplayed() {
+        boolean isLogoDisplayed = isElementDisplayed(loginLogo);
+        boolean isBotImageDisplayed = isElementDisplayed(botImage);
+        boolean isLoginFormDisplayed = isElementDisplayed(usernameInput) && 
+                                      isElementDisplayed(passwordInput) && 
+                                      isElementDisplayed(loginButton);
+        
+        boolean isDisplayed = isLogoDisplayed && isBotImageDisplayed && isLoginFormDisplayed;
+        logger.debug("Страница логина полностью отображается: {}", isDisplayed);
+        return isDisplayed;
+    }
+    
+    /**
+     * Получить плейсхолдер поля username
+     */
+    @Step("Получить плейсхолдер поля имени пользователя")
+    public String getUsernamePlaceholder() {
+        String placeholder = usernameInput.getAttribute("placeholder");
+        logger.debug("Плейсхолдер поля username: {}", placeholder);
+        return placeholder;
+    }
+    
+    /**
+     * Получить плейсхолдер поля password
+     */
+    @Step("Получить плейсхолдер поля пароля")
+    public String getPasswordPlaceholder() {
+        String placeholder = passwordInput.getAttribute("placeholder");
+        logger.debug("Плейсхолдер поля password: {}", placeholder);
+        return placeholder;
+    }
+    
+    /**
+     * Очистить поле username
+     */
+    @Step("Очистить поле имени пользователя")
+    public LoginPage clearUsername() {
+        usernameInput.clear();
+        logger.debug("Поле username очищено");
+        return this;
+    }
+    
+    /**
+     * Очистить поле password
+     */
+    @Step("Очистить поле пароля")
+    public LoginPage clearPassword() {
+        passwordInput.clear();
+        logger.debug("Поле password очищено");
+        return this;
+    }
+    
+    /**
+     * Очистить оба поля
+     */
+    @Step("Очистить оба поля ввода")
+    public LoginPage clearBothFields() {
+        clearUsername();
+        clearPassword();
+        logger.debug("Оба поля ввода очищены");
+        return this;
+    }
+    
+    /**
+     * Проверка что кнопка логина активна
+     */
+    @Step("Проверить что кнопка логина активна")
+    public boolean isLoginButtonEnabled() {
+        boolean isEnabled = loginButton.isEnabled();
+        logger.debug("Кнопка логина активна: {}", isEnabled);
+        return isEnabled;
+    }
+    
+    /**
+     * Получить текст кнопки логина
+     */
+    @Step("Получить текст кнопки логина")
+    public String getLoginButtonText() {
+        String buttonText = loginButton.getAttribute("value");
+        logger.debug("Текст кнопки логина: {}", buttonText);
+        return buttonText;
+    }
+    
+    /**
+     * Проверить наличие стандартных учетных данных на странице
+     */
+    @Step("Проверить наличие стандартных учетных данных")
+    public boolean areStandardCredentialsDisplayed() {
+        boolean isCredentialsDisplayed = isElementDisplayed(loginCredentials);
+        boolean isPasswordDisplayed = isElementDisplayed(loginPassword);
+        
+        boolean areDisplayed = isCredentialsDisplayed && isPasswordDisplayed;
+        logger.debug("Стандартные учетные данные отображаются: {}", areDisplayed);
+        return areDisplayed;
+    }
+    
+    /**
+     * Подсветить поле username (для дебага)
+     */
+    public void highlightUsernameField() {
+        jsExecutor.executeScript(
+            "arguments[0].style.border='3px solid red'", 
+            usernameInput
+        );
+        logger.debug("Поле username подсвечено");
+    }
+    
+    /**
+     * Подсветить поле password (для дебага)
+     */
+    public void highlightPasswordField() {
+        jsExecutor.executeScript(
+            "arguments[0].style.border='3px solid blue'", 
+            passwordInput
+        );
+        logger.debug("Поле password подсвечено");
+    }
+    
+    /**
+     * Снять подсветку с полей
+     */
+    public void removeHighlight() {
+        jsExecutor.executeScript(
+            "arguments[0].style.border=''", 
+            usernameInput
+        );
+        jsExecutor.executeScript(
+            "arguments[0].style.border=''", 
+            passwordInput
+        );
+        logger.debug("Подсветка с полей снята");
+    }
+}

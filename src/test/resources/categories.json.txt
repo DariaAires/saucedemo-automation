@@ -1,0 +1,28 @@
+[
+  {
+    "name": "Проваленные тесты",
+    "matchedStatuses": ["failed"]
+  },
+  {
+    "name": "Пропущенные тесты",
+    "matchedStatuses": ["skipped"]
+  },
+  {
+    "name": "Сломанные тесты",
+    "matchedStatuses": ["broken"]
+  },
+  {
+    "name": "Пройденные тесты",
+    "matchedStatuses": ["passed"]
+  },
+  {
+    "name": "Критические тесты",
+    "messageRegex": ".*CRITICAL.*",
+    "matchedStatuses": ["failed", "passed"]
+  },
+  {
+    "name": "Блокирующие тесты",
+    "messageRegex": ".*BLOCKER.*",
+    "matchedStatuses": ["failed", "passed"]
+  }
+]

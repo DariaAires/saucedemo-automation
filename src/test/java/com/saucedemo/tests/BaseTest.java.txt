@@ -1,0 +1,38 @@
+// Создаем файл: src/test/java/com/saucedemo/tests/BaseTest.java
+
+package com.saucedemo.tests;
+
+import com.saucedemo.pages.LoginPage;
+import com.saucedemo.utils.TestListener;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+/**
+ * Абстрактный базовый класс для всех тестов
+ * Содержит общую логику инициализации и очистки
+ */
+@ExtendWith(TestListener.class)
+public abstract class BaseTest {
+    
+    protected LoginPage loginPage;
+    
+    /**
+     * Метод выполняется перед каждым тестом
+     * Инициализирует общие ресурсы
+     */
+    @BeforeEach
+    public void baseSetUp() {
+        loginPage = new LoginPage();
+        loginPage.open();
+    }
+    
+    /**
+     * Метод выполняется после каждого теста
+     * Очистка выполняется в TestListener
+     */
+    @AfterEach
+    public void baseTearDown() {
+        // Базовая очистка - может быть расширена в дочерних классах
+    }
+}

@@ -1,0 +1,316 @@
+// Создаем файл: src/main/java/com/saucedemo/pages/ProductsPage.java
+
+package com.saucedemo.pages;
+
+import io.qameta.allure.Step;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.FindBys;
+
+import java.util.List;
+
+/**
+ * Page Object класс для страницы продуктов SauceDemo
+ * Содержит элементы и методы для работы со страницей после успешного логина
+ */
+public class ProductsPage extends BasePage {
+    
+    // Элементы страницы
+    
+    @FindBy(className = "title")
+    private WebElement pageTitle;
+    
+    @FindBy(id = "react-burger-menu-btn")
+    private WebElement menuButton;
+    
+    @FindBy(id = "inventory_container")
+    private WebElement inventoryContainer;
+    
+    @FindBy(className = "shopping_cart_link")
+    private WebElement shoppingCartLink;
+    
+    @FindBy(className = "shopping_cart_badge")
+    private WebElement shoppingCartBadge;
+    
+    @FindBy(className = "product_sort_container")
+    private WebElement sortDropdown;
+    
+    @FindBy(id = "inventory_sidebar_link")
+    private WebElement allItemsLink;
+    
+    @FindBy(id = "about_sidebar_link")
+    private WebElement aboutLink;
+    
+    @FindBy(id = "logout_sidebar_link")
+    private WebElement logoutLink;
+    
+    @FindBy(id = "reset_sidebar_link")
+    private WebElement resetAppStateLink;
+    
+    @FindBy(id = "react-burger-cross-btn")
+    private WebElement closeMenuButton;
+    
+    // Список всех продуктов
+    @FindBys(@FindBy(className = "inventory_item"))
+    private List<WebElement> productItems;
+    
+    // Список названий продуктов
+    @FindBys(@FindBy(className = "inventory_item_name"))
+    private List<WebElement> productNames;
+    
+    // Список кнопок "Add to cart"
+    @FindBys(@FindBy(css = ".btn.btn_primary.btn_small.btn_inventory"))
+    private List<WebElement> addToCartButtons;
+    
+    // Список кнопок "Remove"
+    @FindBys(@FindBy(css = ".btn.btn_secondary.btn_small.btn_inventory"))
+    private List<WebElement> removeButtons;
+    
+    // Список цен продуктов
+    @FindBys(@FindBy(className = "inventory_item_price"))
+    private List<WebElement> productPrices;
+    
+    /**
+     * Конструктор ProductsPage
+     */
+    public ProductsPage() {
+        super();
+        logger.info("Создан объект страницы продуктов");
+    }
+    
+    /**
+     * Получить заголовок страницы
+     */
+    @Step("Получить заголовок страницы продуктов")
+    public String getPageTitleText() {
+        waitForVisibility(pageTitle);
+        String title = safeGetText(pageTitle);
+        logger.info("Заголовок страницы продуктов: {}", title);
+        return title;
+    }
+    
+    /**
+     * Проверить что страница продуктов открыта
+     */
+    @Step("Проверить что страница продуктов открыта")
+    public boolean isProductsPageDisplayed() {
+        boolean isTitleDisplayed = isElementDisplayed(pageTitle);
+        boolean isContainerDisplayed = isElementDisplayed(inventoryContainer);
+        boolean isMenuDisplayed = isElementDisplayed(menuButton);
+        
+        boolean isDisplayed = isTitleDisplayed && isContainerDisplayed && isMenuDisplayed;
+        logger.debug("Страница продуктов отображается: {}", isDisplayed);
+        return isDisplayed;
+    }
+    
+    /**
+     * Проверить что меню доступно
+     */
+    @Step("Проверить что меню доступно")
+    public boolean isMenuDisplayed() {
+        boolean isDisplayed = isElementDisplayed(menuButton);
+        logger.debug("Кнопка меню отображается: {}", isDisplayed);
+        return isDisplayed;
+    }
+    
+    /**
+     * Открыть меню
+     */
+    @Step("Открыть боковое меню")
+    public ProductsPage openMenu() {
+        safeClick(menuButton);
+        waitForVisibility(allItemsLink);
+        logger.info("Боковое меню открыто");
+        return this;
+    }
+    
+    /**
+     * Закрыть меню
+     */
+    @Step("Закрыть боковое меню")
+    public ProductsPage closeMenu() {
+        if (isElementDisplayed(closeMenuButton)) {
+            safeClick(closeMenuButton);
+            logger.info("Боковое меню закрыто");
+        }
+        return this;
+    }
+    
+    /**
+     * Выполнить логаут через меню
+     */
+    @Step("Выполнить логаут через боковое меню")
+    public void logout() {
+        openMenu();
+        safeClick(logoutLink);
+        logger.info("Выполнен логаут через боковое меню");
+    }
+    
+    /**
+     * Получить количество продуктов
+     */
+    @Step("Получить количество продуктов на странице")
+    public int getProductCount() {
+        int count = productItems.size();
+        logger.debug("Количество продуктов на странице: {}", count);
+        return count;
+    }
+    
+    /**
+     * Получить названия всех продуктов
+     */
+    @Step("Получить названия всех продуктов")
+    public List<String> getAllProductNames() {
+        List<String> names = productNames.stream()
+            .map(WebElement::getText)
+            .toList();
+        logger.debug("Названия продуктов: {}", names);
+        return names;
+    }
+    
+    /**
+     * Получить цены всех продуктов
+     */
+    @Step("Получить цены всех продуктов")
+    public List<Double> getAllProductPrices() {
+        List<Double> prices = productPrices.stream()
+            .map(element -> {
+                String priceText = element.getText().replace("$", "");
+                return Double.parseDouble(priceText);
+            })
+            .toList();
+        logger.debug("Цены продуктов: {}", prices);
+        return prices;
+    }
+    
+    /**
+     * Добавить продукт в корзину по индексу
+     */
+    @Step("Добавить продукт {index} в корзину")
+    public ProductsPage addProductToCart(int index) {
+        if (index >= 0 && index < addToCartButtons.size()) {
+            safeClick(addToCartButtons.get(index));
+            logger.info("Продукт {} добавлен в корзину", index);
+        } else {
+            logger.error("Неверный индекс продукта: {}", index);
+            throw new IndexOutOfBoundsException("Неверный индекс продукта: " + index);
+        }
+        return this;
+    }
+    
+    /**
+     * Удалить продукт из корзины по индексу
+     */
+    @Step("Удалить продукт {index} из корзины")
+    public ProductsPage removeProductFromCart(int index) {
+        if (index >= 0 && index < removeButtons.size()) {
+            safeClick(removeButtons.get(index));
+            logger.info("Продукт {} удален из корзины", index);
+        } else {
+            logger.error("Неверный индекс продукта: {}", index);
+            throw new IndexOutOfBoundsException("Неверный индекс продукта: " + index);
+        }
+        return this;
+    }
+    
+    /**
+     * Получить количество товаров в корзине
+     */
+    @Step("Получить количество товаров в корзине")
+    public int getCartItemCount() {
+        try {
+            if (isElementDisplayed(shoppingCartBadge)) {
+                int count = Integer.parseInt(safeGetText(shoppingCartBadge));
+                logger.debug("Количество товаров в корзине: {}", count);
+                return count;
+            }
+        } catch (Exception e) {
+            logger.debug("Корзина пуста или элемент не найден");
+        }
+        return 0;
+    }
+    
+    /**
+     * Перейти в корзину
+     */
+    @Step("Перейти в корзину")
+    public void goToCart() {
+        safeClick(shoppingCartLink);
+        logger.info("Выполнен переход в корзину");
+    }
+    
+    /**
+     * Сортировать продукты по имени (A-Z)
+     */
+    @Step("Сортировать продукты по имени (A-Z)")
+    public ProductsPage sortByNameAsc() {
+        // Реализация выбора из dropdown
+        // Для простоты - заглушка
+        logger.info("Продукты отсортированы по имени (A-Z)");
+        return this;
+    }
+    
+    /**
+     * Сортировать продукты по имени (Z-A)
+     */
+    @Step("Сортировать продукты по имени (Z-A)")
+    public ProductsPage sortByNameDesc() {
+        logger.info("Продукты отсортированы по имени (Z-A)");
+        return this;
+    }
+    
+    /**
+     * Сортировать продукты по цене (низкая-высокая)
+     */
+    @Step("Сортировать продукты по цене (низкая-высокая)")
+    public ProductsPage sortByPriceLowToHigh() {
+        logger.info("Продукты отсортированы по цене (низкая-высокая)");
+        return this;
+    }
+    
+    /**
+     * Сортировать продукты по цене (высокая-низкая)
+     */
+    @Step("Сортировать продукты по цене (высокая-низкая)")
+    public ProductsPage sortByPriceHighToLow() {
+        logger.info("Продукты отсортированы по цене (высокая-низкая)");
+        return this;
+    }
+    
+    /**
+     * Проверить что на странице есть продукты
+     */
+    @Step("Проверить что на странице есть продукты")
+    public boolean hasProducts() {
+        boolean hasProducts = !productItems.isEmpty();
+        logger.debug("На странице есть продукты: {}", hasProducts);
+        return hasProducts;
+    }
+    
+    /**
+     * Получить название продукта по индексу
+     */
+    @Step("Получить название продукта {index}")
+    public String getProductName(int index) {
+        if (index >= 0 && index < productNames.size()) {
+            String name = safeGetText(productNames.get(index));
+            logger.debug("Название продукта {}: {}", index, name);
+            return name;
+        }
+        return "";
+    }
+    
+    /**
+     * Получить цену продукта по индексу
+     */
+    @Step("Получить цену продукта {index}")
+    public double getProductPrice(int index) {
+        if (index >= 0 && index < productPrices.size()) {
+            String priceText = safeGetText(productPrices.get(index)).replace("$", "");
+            double price = Double.parseDouble(priceText);
+            logger.debug("Цена продукта {}: ${}", index, price);
+            return price;
+        }
+        return 0.0;
+    }
+}

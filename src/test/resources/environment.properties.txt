@@ -1,0 +1,11 @@
+# Environment Configuration for Allure Reports
+Browser=Chrome
+Browser.Version=Latest
+OS=Windows 10
+Java.Version=11
+Test.Framework=JUnit 5
+Selenium.Version=4.15.0
+Project.Name=SauceDemo Automation
+Project.Version=1.0
+Base.URL=https://www.saucedemo.com/
+Test.Author=Automation Team

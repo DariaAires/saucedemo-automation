@@ -1,0 +1,32 @@
+# Application Configuration
+base.url=https://www.saucedemo.com/
+
+# Browser Configuration (chrome, firefox, edge)
+browser=chrome
+
+# Timeout Configuration (in seconds)
+implicit.wait=10
+page.load.timeout=30
+explicit.wait=10
+
+# Test User Credentials
+standard.user=standard_user
+standard.password=secret_sauce
+locked.user=locked_out_user
+performance.user=performance_glitch_user
+invalid.user=invalid_user
+invalid.password=invalid_password
+
+# Test Data
+valid.username=standard_user
+valid.password=secret_sauce
+invalid.username=invalid_user
+invalid.password=invalid_password
+
+# Screenshot Settings
+screenshot.on.failure=true
+screenshot.directory=screenshots/
+
+# Report Settings
+allure.results.dir=target/allure-results
+allure.report.dir=target/allure-report
